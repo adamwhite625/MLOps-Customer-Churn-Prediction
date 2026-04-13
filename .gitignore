@@ -1,0 +1,53 @@
+# [Project 11] MLOps Customer Churn .gitignore
+
+# 1. Dữ liệu (QUAN TRỌNG: Không đẩy dữ liệu gốc/đã xử lý lên Git, dùng DVC)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+*.csv
+*.xlsx
+*.parquet
+
+# 2. Python & Môi trường ảo (Environment)
+env/
+venv/
+.venv/
+bin/
+lib/
+share/
+include/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env.bak/
+venv.bak/
+
+# 3. Notebooks & Checkpoints
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# 4. MLOps Tools (DVC, Feast, MLflow)
+.dvc/cache
+.dvc/tmp
+/feature_repo/data/
+mlruns/
+outputs/
+logs/
+
+# 5. Azure & Local Config
+.azure/
+.env
+secret.txt
+*.key
+*.token
+credentials.json
+
+# 6. IDEs & Hệ điều hành
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
