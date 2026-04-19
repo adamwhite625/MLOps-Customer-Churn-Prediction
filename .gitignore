@@ -1,8 +1,12 @@
 # [Project 11] MLOps Customer Churn .gitignore
 
-# 1. Dữ liệu (QUAN TRỌNG: Không đẩy dữ liệu gốc/đã xử lý lên Git, dùng DVC)
+# 1. Dữ liệu (Dùng DVC để quản lý dữ liệu thật, Git quản lý file định danh .dvc)
 data/raw/*
+!data/raw/*.dvc
+!data/raw/.gitignore
 data/processed/*
+!data/processed/*.dvc
+!data/processed/.gitignore
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 *.csv
