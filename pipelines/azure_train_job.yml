@@ -1,0 +1,13 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+code: ../src/training/
+command: >-
+  python train.py 
+  --input_data ${{inputs.training_data}}
+inputs:
+  training_data: 
+    type: uri_file
+    path: ../data/processed/churn_cleaned.csv
+environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38-cpu@latest
+compute: azureml:churn-cluster
+display_name: customer-churn-training-job
+experiment_name: churn-prediction-experiment

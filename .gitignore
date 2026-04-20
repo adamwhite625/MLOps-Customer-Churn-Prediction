@@ -48,6 +48,8 @@ secret.txt
 *.key
 *.token
 credentials.json
+config.json
+.amlignore
 
 # 6. IDEs & Hệ điều hành
 .vscode/
