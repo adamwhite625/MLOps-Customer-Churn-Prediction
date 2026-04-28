@@ -7,7 +7,9 @@ inputs:
   training_data: 
     type: uri_file
     path: azureml:churn-dataset:1
-environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38-cpu@latest
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
+  conda_file: ../src/serving/conda.yml
 compute: azureml:churn-cluster
 display_name: customer-churn-training-job
 experiment_name: churn-prediction-experiment
