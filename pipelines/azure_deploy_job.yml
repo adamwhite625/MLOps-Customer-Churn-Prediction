@@ -1,0 +1,15 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineEndpoint.schema.json
+name: churn-endpoint-${{random_suffix}}
+auth_mode: key
+
+deployments:
+  - name: blue-deployment
+    model: azureml:CustomerChurnModel:1
+    code_configuration:
+      code: ../src/serving/
+      scoring_script: score.py
+    environment: 
+      conda_file: ../src/serving/conda.yml
+      image: mcr.microsoft.com/azureml/openmmlab-pytorch-1.10-ubuntu20.04-py38-cpu-inference:latest
+    instance_type: Standard_DS2_v2
+    instance_count: 1
