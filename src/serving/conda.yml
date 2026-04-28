@@ -1,0 +1,14 @@
+name: churn-serving-env
+channels:
+  - conda-forge
+  - default
+dependencies:
+  - python=3.8
+  - pip:
+    - azureml-defaults
+    - inference-schema[numpy-support]
+    - joblib
+    - pandas
+    - scikit-learn==1.2.2
+    - xgboost
+    - mlflow

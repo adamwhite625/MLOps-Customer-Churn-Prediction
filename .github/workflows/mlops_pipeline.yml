@@ -1,0 +1,57 @@
+name: MLOps Churn Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/training/**"
+      - "data/**"
+      - "pipelines/azure_train_job.yml"
+  workflow_dispatch:
+
+jobs:
+  train-and-deploy:
+    name: Train and Deploy Model
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Azure ML CLI
+        run: |
+          pip install azure-ai-ml
+          az extension add -n ml -y
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set Azure ML workspace defaults
+        run: |
+          az configure --defaults group=${{ secrets.AZURE_RESOURCE_GROUP }} workspace=${{ secrets.AZURE_ML_WORKSPACE }}
+
+      - name: Submit Training Job
+        id: training
+        run: |
+          JOB_NAME=$(az ml job create -f pipelines/azure_train_job.yml --query name -o tsv)
+          echo "job_name=$JOB_NAME" >> $GITHUB_OUTPUT
+          echo "Training job submitted: $JOB_NAME"
+
+      - name: Wait for Training Job to complete
+        run: |
+          az ml job stream --name ${{ steps.training.outputs.job_name }}
+
+      - name: Update Deployment with new model
+        run: |
+          az ml online-deployment update \
+            --name blue \
+            --endpoint-name churn-endpoint \
+            -f pipelines/azure_deployment.yml

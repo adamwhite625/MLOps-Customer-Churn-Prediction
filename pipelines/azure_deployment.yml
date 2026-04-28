@@ -1,0 +1,12 @@
+name: blue
+endpoint_name: churn-endpoint
+app_insights_enabled: true
+model: azureml:CustomerChurnModel:1
+code_configuration:
+  code: ../src/serving/
+  scoring_script: score.py
+environment:
+  conda_file: ../src/serving/conda.yml
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
+instance_type: Standard_F2s_v2
+instance_count: 1
