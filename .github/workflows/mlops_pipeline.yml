@@ -9,6 +9,8 @@ on:
       - "data/**"
       - "pipelines/azure_train_job.yml"
   workflow_dispatch:
+  repository_dispatch:
+    types: [trigger_ct]
 
 jobs:
   train-and-deploy:
@@ -37,6 +39,14 @@ jobs:
       - name: Set Azure ML workspace defaults
         run: |
           az configure --defaults group=${{ secrets.AZURE_RESOURCE_GROUP }} workspace=${{ secrets.AZURE_ML_WORKSPACE }}
+
+      - name: Materialize Feast Features to Redis
+        env:
+          REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
+        run: |
+          pip install pandas pyarrow "feast[redis]" numpy
+          az ml data download --name churn-dataset --version 1 --download-path ./data/raw/
+          python src/training/materialize.py
 
       - name: Submit Training Job
         id: training
