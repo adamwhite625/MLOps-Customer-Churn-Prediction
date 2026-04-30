@@ -17,8 +17,19 @@ PRIMARY_KEY = os.getenv("AZURE_ML_PRIMARY_KEY", "")
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING", "")
 CONTAINER_NAME = "churn-feedback"
 
+import subprocess
+
+FEAST_REPO_PATH = "feature_repo/feature_repo"
+
+# Run feast apply at startup to sync registry with feature definitions
 try:
-    store = FeatureStore(repo_path="feature_repo/feature_repo")
+    subprocess.run(["feast", "apply"], cwd=FEAST_REPO_PATH, check=True, capture_output=True)
+    print("Feast apply completed successfully.")
+except Exception as e:
+    print(f"Warning: feast apply failed: {e}")
+
+try:
+    store = FeatureStore(repo_path=FEAST_REPO_PATH)
     # Inject Redis connection string directly to bypass YAML env-var substitution
     redis_conn = os.getenv("REDIS_CONNECTION_STRING", "")
     if redis_conn:
@@ -50,10 +61,8 @@ def predict_with_feast(customer_id):
         else:
             search_id = customer_id
         
-        # Debug: log connection info
-        conn_str = store.config.online_store.connection_string
-        print(f"[DEBUG] Redis conn string length: {len(conn_str) if conn_str else 0}")
-        print(f"[DEBUG] Querying customer_id={search_id} (type={type(search_id).__name__})")
+        conn_str = store.config.online_store.connection_string or ""
+        redis_type = store.config.online_store.redis_type or "unknown"
             
         feature_vector = store.get_online_features(
             features=[
@@ -66,11 +75,13 @@ def predict_with_feast(customer_id):
             entity_rows=[{"customer_id": search_id}]
         ).to_dict()
         
-        print(f"[DEBUG] Feature vector keys: {list(feature_vector.keys())}")
-        print(f"[DEBUG] Age value: {feature_vector.get('churn_features:Age', ['MISSING'])}")
+        age_val = feature_vector.get("churn_features:Age", ["MISSING"])
         
         if "churn_features:Age" not in feature_vector or feature_vector["churn_features:Age"][0] is None:
-            return f"Error: ID {customer_id} not found in Redis (conn_len={len(conn_str) if conn_str else 0})", None
+            debug = (f"DEBUG: conn_len={len(conn_str)}, conn_start={conn_str[:30]}..., "
+                     f"redis_type={redis_type}, search_id={search_id}({type(search_id).__name__}), "
+                     f"age_raw={age_val}")
+            return f"Error: ID {customer_id} not found in Redis. {debug}", None
             
         data = {
             "Age": feature_vector["churn_features:Age"][0],
