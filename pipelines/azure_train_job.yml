@@ -6,7 +6,7 @@ command: >-
 inputs:
   training_data: 
     type: uri_file
-    path: azureml:churn-dataset:1
+    path: azureml:churn-dataset@latest
 environment:
   image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
   conda_file: ../src/serving/conda.yml
