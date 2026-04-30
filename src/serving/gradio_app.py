@@ -14,10 +14,6 @@ load_dotenv()
 # Configure endpoint URLs and credentials
 SCORING_URI = os.getenv("AZURE_ML_SCORING_URI", "https://churn-endpoint.southeastasia.inference.ml.azure.com/score")
 PRIMARY_KEY = os.getenv("AZURE_ML_PRIMARY_KEY", "")
-
-if "REDIS_CONNECTION_STRING" not in os.environ:
-    os.environ["REDIS_CONNECTION_STRING"] = ""
-
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING", "")
 CONTAINER_NAME = "churn-feedback"
 
