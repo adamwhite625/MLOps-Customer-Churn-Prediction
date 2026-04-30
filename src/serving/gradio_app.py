@@ -19,6 +19,10 @@ CONTAINER_NAME = "churn-feedback"
 
 try:
     store = FeatureStore(repo_path="feature_repo/feature_repo")
+    # Inject Redis connection string directly to bypass YAML env-var substitution
+    redis_conn = os.getenv("REDIS_CONNECTION_STRING", "")
+    if redis_conn:
+        store.config.online_store.connection_string = redis_conn
 except Exception as e:
     store = None
     print(f"Warning: Feast repo is not ready. Error: {e}")
