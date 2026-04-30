@@ -1,5 +1,7 @@
 import os
+import sys
 import glob
+import subprocess
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 from feast import FeatureStore
@@ -45,19 +47,19 @@ def main():
     redis_conn = os.environ.get("REDIS_CONNECTION_STRING")
     if not redis_conn:
         print("ERROR: REDIS_CONNECTION_STRING is empty. Check Github Repository Secrets.")
-        exit(1)
+        sys.exit(1)
 
     print(f"Redis connection string found (length={len(redis_conn)}). Initializing Feast store...")
 
-    # Load the feature store and inject the connection string at runtime.
-    # This bypasses unreliable shell variable substitution in feature_store.yaml.
+    # Run feast apply via subprocess (uses feature_store.yaml config)
+    print("\n--- Running Feast Apply ---")
+    subprocess.run(["feast", "apply"], cwd=FEATURE_REPO_PATH, check=True)
+
+    # Load store and inject the connection string directly to bypass YAML env-var substitution
+    print("\n--- Running Feast Materialize (Pushing to Redis) ---")
     store = FeatureStore(repo_path=FEATURE_REPO_PATH)
     store.config.online_store.connection_string = redis_conn
 
-    print("\n--- Running Feast Apply ---")
-    store.apply(objects=store.repo_contents().feature_views)
-
-    print("\n--- Running Feast Materialize (Pushing to Redis) ---")
     start = datetime(2020, 1, 1, tzinfo=timezone.utc)
     end = datetime.now(timezone.utc) + timedelta(days=1)
     store.materialize(start_date=start, end_date=end)
