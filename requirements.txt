@@ -1,0 +1,6 @@
+gradio
+requests
+pandas
+feast[redis]
+azure-storage-blob
+python-dotenv
