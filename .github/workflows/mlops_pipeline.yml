@@ -44,12 +44,36 @@ jobs:
         env:
           REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
         run: |
-          pip install pandas pyarrow "feast[redis]" numpy "dvc[azure]"
+          pip install pandas pyarrow "feast[redis]" numpy "dvc[azure]" azure-storage-blob
           # Lấy Connection String động từ Azure CLI đã login
           CONN_STR=$(az storage account show-connection-string --name churnmlopsws2289572105 --resource-group mlops-churn-rg --query connectionString -o tsv)
+          export AZURE_STORAGE_CONNECTION_STRING="$CONN_STR"
+          
           dvc remote modify --local myremote connection_string "$CONN_STR"
           dvc pull
+          
+          # Chạy kịch bản gộp dữ liệu Feedback
+          python src/data_pipeline/merge_feedback.py
+          
+          # Cập nhật DVC
+          dvc add data/raw/customer_churn_dataset-training-master.csv
+          dvc push
+          
+          # Đăng ký phiên bản Data mới lên Azure ML
+          az ml data create --name churn-dataset --version ${{ github.run_number }} --path data/raw/customer_churn_dataset-training-master.csv --type uri_file
+          
+          # Cập nhật File azure_train_job.yml để dùng version mới nhất (hoặc để nguyên azureml:churn-dataset@latest nếu đang dùng)
+          
+          # Chạy Feast Materialize
           python src/training/materialize.py
+
+      - name: Commit and Push DVC Tracking File
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add data/raw/customer_churn_dataset-training-master.csv.dvc
+          # Chỉ commit nếu có sự thay đổi
+          git diff --staged --quiet || (git commit -m "Auto-update DVC with new feedback data" && git push origin HEAD)
 
       - name: Submit Training Job
         id: training
