@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from feast import Entity, FeatureView, Field, FileSource
+from feast import Entity, FeatureView, Field, FileSource, ValueType
 from feast.types import Float32, Int64
 
 # Source pointing to the preprocessed churn dataset in Parquet format
@@ -13,7 +13,7 @@ churn_source = FileSource(
 customer = Entity(
     name="customer",
     join_keys=["customer_id"],
-    value_type=Int64,
+    value_type=ValueType.INT64,
 )
 
 # Feature view defining the input features for the churn prediction model
