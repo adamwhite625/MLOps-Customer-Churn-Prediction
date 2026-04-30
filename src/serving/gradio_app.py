@@ -42,13 +42,18 @@ def call_azure_ml(data_dict):
 def predict_with_feast(customer_id):
     """Predicts churn using features retrieved from Feast online store."""
     if store is None:
-        return "Error: Cannot connect to Redis.", None
+        return "Error: Feast store is None. Cannot connect to Redis.", None
         
     try:
         if str(customer_id).isdigit():
             search_id = int(customer_id)
         else:
             search_id = customer_id
+        
+        # Debug: log connection info
+        conn_str = store.config.online_store.connection_string
+        print(f"[DEBUG] Redis conn string length: {len(conn_str) if conn_str else 0}")
+        print(f"[DEBUG] Querying customer_id={search_id} (type={type(search_id).__name__})")
             
         feature_vector = store.get_online_features(
             features=[
@@ -61,8 +66,11 @@ def predict_with_feast(customer_id):
             entity_rows=[{"customer_id": search_id}]
         ).to_dict()
         
+        print(f"[DEBUG] Feature vector keys: {list(feature_vector.keys())}")
+        print(f"[DEBUG] Age value: {feature_vector.get('churn_features:Age', ['MISSING'])}")
+        
         if "churn_features:Age" not in feature_vector or feature_vector["churn_features:Age"][0] is None:
-            return f"Error: ID {customer_id} not found in Redis", None
+            return f"Error: ID {customer_id} not found in Redis (conn_len={len(conn_str) if conn_str else 0})", None
             
         data = {
             "Age": feature_vector["churn_features:Age"][0],
