@@ -44,8 +44,11 @@ jobs:
         env:
           REDIS_CONNECTION_STRING: ${{ secrets.REDIS_CONNECTION_STRING }}
         run: |
-          pip install pandas pyarrow "feast[redis]" numpy
-          az ml data download --name churn-dataset --version 1 --download-path ./data/raw/
+          pip install pandas pyarrow "feast[redis]" numpy "dvc[azure]"
+          # Lấy Connection String động từ Azure CLI đã login
+          CONN_STR=$(az storage account show-connection-string --name churnmlopsws2289572105 --resource-group mlops-churn-rg --query connectionString -o tsv)
+          dvc remote modify --local myremote connection_string "$CONN_STR"
+          dvc pull
           python src/training/materialize.py
 
       - name: Submit Training Job
