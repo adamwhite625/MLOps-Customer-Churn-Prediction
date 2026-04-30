@@ -26,8 +26,24 @@ def train_model(model_obj, X_train, y_train, X_test, y_test, run_name):
         
         return f1, model_obj
 
+def preprocess(df):
+    # Encode text columns to numeric values expected by the model
+    if df['Gender'].dtype == object:
+        df['Gender'] = df['Gender'].str.strip().map({'Female': 0, 'Male': 1}).fillna(0).astype(int)
+    if df['Subscription Type'].dtype == object:
+        df['Subscription Type'] = df['Subscription Type'].str.strip().map({'Basic': 0, 'Standard': 1, 'Premium': 2}).fillna(1).astype(int)
+    if df['Contract Length'].dtype == object:
+        df['Contract Length'] = df['Contract Length'].str.strip().map({'Monthly': 0, 'Quarterly': 1, 'Annual': 2}).fillna(2).astype(int)
+
+    # Drop any non-feature columns that may be present
+    drop_cols = [c for c in ['CustomerID', 'customer_id', 'event_timestamp'] if c in df.columns]
+    df = df.drop(columns=drop_cols)
+    df = df.dropna()
+    return df
+
 def run_experiment(data_path):
     df = pd.read_csv(data_path)
+    df = preprocess(df)
     X = df.drop(columns=['Churn'])
     y = df['Churn']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
