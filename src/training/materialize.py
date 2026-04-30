@@ -15,17 +15,18 @@ def prepare_real_data():
     print(f"Đang xử lý dữ liệu thật từ: {csv_path}")
     
     df = pd.read_csv(csv_path)
+    df = df.dropna() # Bỏ dòng trống (NaN) để không bị lỗi khi parse Int
     
     # Chuẩn hóa cột giống y hệt file Training
     df.rename(columns={"CustomerID": "customer_id"}, inplace=True)
     
     # Mapping các cột Text sang Số (Vì Feast schema và Model yêu cầu Int64)
     if df['Gender'].dtype == 'O':
-        df['Gender'] = df['Gender'].map({"Female": 0, "Male": 1}).astype("int64")
+        df['Gender'] = df['Gender'].str.strip().map({"Female": 0, "Male": 1}).fillna(0).astype("int64")
     if df['Subscription Type'].dtype == 'O':
-        df['Subscription Type'] = df['Subscription Type'].map({"Basic": 0, "Standard": 1, "Premium": 2}).astype("int64")
+        df['Subscription Type'] = df['Subscription Type'].str.strip().map({"Basic": 0, "Standard": 1, "Premium": 2}).fillna(1).astype("int64")
     if df['Contract Length'].dtype == 'O':
-        df['Contract Length'] = df['Contract Length'].map({"Monthly": 0, "Quarterly": 1, "Annual": 2}).astype("int64")
+        df['Contract Length'] = df['Contract Length'].str.strip().map({"Monthly": 0, "Quarterly": 1, "Annual": 2}).fillna(2).astype("int64")
         
     # Ép kiểu Float32 cho các cột số còn lại
     float_cols = ['Age', 'Tenure', 'Usage Frequency', 'Support Calls', 'Payment Delay', 'Total Spend', 'Last Interaction']
