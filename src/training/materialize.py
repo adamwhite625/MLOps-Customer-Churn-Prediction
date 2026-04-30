@@ -44,6 +44,18 @@ def prepare_real_data():
 def main():
     prepare_real_data()
     
+    redis_conn = os.environ.get("REDIS_CONNECTION_STRING")
+    if not redis_conn:
+        print("❌ LỖI NGHIÊM TRỌNG: Biến môi trường REDIS_CONNECTION_STRING đang bị RỖNG!")
+        print("Vui lòng kiểm tra lại Github Secrets của bạn xem đã tạo đúng tên và dán đúng giá trị chưa.")
+        exit(1)
+    elif redis_conn.startswith('"') or redis_conn.endswith('"'):
+        print("❌ LỖI NGHIÊM TRỌNG: Mật khẩu Redis trong Github Secrets đang bị thừa dấu ngoặc kép \" \"!")
+        print("Vui lòng xóa trắng Secret cũ và dán lại chuỗi mật khẩu KHÔNG CÓ dấu ngoặc kép.")
+        exit(1)
+    else:
+        print("✅ Đã tìm thấy cấu hình REDIS_CONNECTION_STRING hợp lệ.")
+
     print("\n--- Running Feast Apply ---")
     subprocess.run(["feast", "apply"], cwd="feature_repo/feature_repo", check=True)
     
