@@ -13,6 +13,7 @@ churn_source = FileSource(
 customer = Entity(
     name="customer",
     join_keys=["customer_id"],
+    value_type=Int64,
 )
 
 # Feature view defining the input features for the churn prediction model
