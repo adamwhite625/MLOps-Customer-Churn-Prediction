@@ -75,25 +75,25 @@ def predict_with_feast(customer_id):
             entity_rows=[{"customer_id": search_id}]
         ).to_dict()
         
-        age_val = feature_vector.get("churn_features:Age", ["MISSING"])
+        age_val = feature_vector.get("Age", ["MISSING"])
         
-        if "churn_features:Age" not in feature_vector or feature_vector["churn_features:Age"][0] is None:
+        if "Age" not in feature_vector or feature_vector["Age"][0] is None:
             debug = (f"DEBUG: conn_len={len(conn_str)}, conn_start={conn_str[:30]}..., "
                      f"redis_type={redis_type}, search_id={search_id}({type(search_id).__name__}), "
-                     f"age_raw={age_val}")
+                     f"age_raw={age_val}, all_keys={list(feature_vector.keys())}")
             return f"Error: ID {customer_id} not found in Redis. {debug}", None
             
         data = {
-            "Age": feature_vector["churn_features:Age"][0],
-            "Gender": feature_vector["churn_features:Gender"][0],
-            "Tenure": feature_vector["churn_features:Tenure"][0],
-            "Usage Frequency": feature_vector["churn_features:Usage Frequency"][0],
-            "Support Calls": feature_vector["churn_features:Support Calls"][0],
-            "Payment Delay": feature_vector["churn_features:Payment Delay"][0],
-            "Subscription Type": feature_vector["churn_features:Subscription Type"][0],
-            "Contract Length": feature_vector["churn_features:Contract Length"][0],
-            "Total Spend": feature_vector["churn_features:Total Spend"][0],
-            "Last Interaction": feature_vector["churn_features:Last Interaction"][0]
+            "Age": feature_vector["Age"][0],
+            "Gender": feature_vector["Gender"][0],
+            "Tenure": feature_vector["Tenure"][0],
+            "Usage Frequency": feature_vector["Usage Frequency"][0],
+            "Support Calls": feature_vector["Support Calls"][0],
+            "Payment Delay": feature_vector["Payment Delay"][0],
+            "Subscription Type": feature_vector["Subscription Type"][0],
+            "Contract Length": feature_vector["Contract Length"][0],
+            "Total Spend": feature_vector["Total Spend"][0],
+            "Last Interaction": feature_vector["Last Interaction"][0]
         }
         
         label = call_azure_ml(data)
