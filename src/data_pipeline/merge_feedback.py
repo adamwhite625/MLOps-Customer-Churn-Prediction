@@ -51,16 +51,17 @@ def main():
         df_new.drop(columns=["Timestamp"], inplace=True)
 
     # Chuyển đổi mapping chữ sang giống file gốc (Basic->Basic, Male->Male)
-    # Tuy nhiên, trong Gradio code bạn đã map nó thành 0, 1, 2 rồi.
-    # Để file gốc đồng nhất, chúng ta cần map ngược lại thành chữ nếu file gốc dùng chữ.
-    # Nhìn lại dataset gốc trên Kaggle: Gender là 'Female'/'Male', Subscription Type là 'Basic'/'Standard'/'Premium'
-    gender_map = {0: "Female", 1: "Male"}
-    sub_map = {0: "Basic", 1: "Standard", 2: "Premium"}
-    contract_map = {0: "Monthly", 1: "Quarterly", 2: "Annual"}
+    # Hỗ trợ cả định dạng số (từ Flow 2) và định dạng chữ (từ file CSV Flow 3)
+    gender_map = {0: "Female", 1: "Male", "0": "Female", "1": "Male", "Female": "Female", "Male": "Male"}
+    sub_map = {0: "Basic", 1: "Standard", 2: "Premium", "0": "Basic", "1": "Standard", "2": "Premium", "Basic": "Basic", "Standard": "Standard", "Premium": "Premium"}
+    contract_map = {0: "Monthly", 1: "Quarterly", 2: "Annual", "0": "Monthly", "1": "Quarterly", "2": "Annual", "Monthly": "Monthly", "Quarterly": "Quarterly", "Annual": "Annual"}
 
-    df_new["Gender"] = df_new["Gender"].map(gender_map)
-    df_new["Subscription Type"] = df_new["Subscription Type"].map(sub_map)
-    df_new["Contract Length"] = df_new["Contract Length"].map(contract_map)
+    if "Gender" in df_new.columns:
+        df_new["Gender"] = df_new["Gender"].map(gender_map).fillna(df_new["Gender"])
+    if "Subscription Type" in df_new.columns:
+        df_new["Subscription Type"] = df_new["Subscription Type"].map(sub_map).fillna(df_new["Subscription Type"])
+    if "Contract Length" in df_new.columns:
+        df_new["Contract Length"] = df_new["Contract Length"].map(contract_map).fillna(df_new["Contract Length"])
 
     # Đọc dữ liệu cũ
     print(f"Đang đọc dữ liệu lịch sử từ: {HISTORICAL_DATA_PATH}")

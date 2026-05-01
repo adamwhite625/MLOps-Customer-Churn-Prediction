@@ -191,6 +191,62 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 outputs=[out_manual_pred, out_manual_log]
             )
 
+        with gr.TabItem("Flow 3: Batch Upload for Training"):
+            gr.Markdown("Upload a CSV file containing multiple customer records (without CustomerID). This data will be sent to Azure Storage and trigger the continuous training loop.")
+            
+            with gr.Row():
+                batch_file = gr.File(label="Upload CSV Data", file_types=[".csv"])
+            
+            btn_batch = gr.Button("Upload & Trigger Training", variant="primary")
+            out_batch_log = gr.Textbox(label="Upload Status")
+            
+            def upload_batch_data(file_obj):
+                if file_obj is None:
+                    return "Error: Please upload a CSV file."
+                try:
+                    # Đọc file CSV mới
+                    df_new = pd.read_csv(file_obj.name)
+                    
+                    # Nếu file có cột CustomerID, hãy bỏ đi vì merge_feedback.py sẽ tự tạo
+                    if "CustomerID" in df_new.columns:
+                        df_new = df_new.drop(columns=["CustomerID"])
+                        
+                    # Thêm cột Timestamp để theo dõi giống Flow 2
+                    if "Timestamp" not in df_new.columns:
+                        df_new["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                    file_path = "data/raw/collected_data.csv"
+                    os.makedirs("data/raw", exist_ok=True)
+                    
+                    # Nối vào file gom chung (dùng chung với Flow 2)
+                    if not os.path.exists(file_path):
+                        df_new.to_csv(file_path, index=False)
+                    else:
+                        df_new.to_csv(file_path, mode='a', header=False, index=False)
+                        
+                    total_rows = sum(1 for line in open(file_path)) - 1
+                    log_msg = f"Added {len(df_new)} rows from CSV. (Total: {total_rows}/5 rows to trigger retraining)"
+                    
+                    # Kiểm tra nếu đủ 5 dòng thì kích hoạt upload
+                    if total_rows >= 5:
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        blob_name = f"batch_{timestamp}_bulk.csv"
+                        
+                        blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
+                        blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=blob_name)
+                        
+                        with open(file_path, "rb") as file_data:
+                            blob_client.upload_blob(file_data)
+                            
+                        log_msg += f"\nUploaded batch {blob_name} to Azure Storage! Continuous Training Pipeline Triggered 🚀"
+                        os.remove(file_path)
+                        
+                    return log_msg
+                except Exception as e:
+                    return f"Error processing file: {str(e)}"
+                    
+            btn_batch.click(fn=upload_batch_data, inputs=[batch_file], outputs=[out_batch_log])
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))
     demo.launch(server_name="0.0.0.0", server_port=port, share=False)
