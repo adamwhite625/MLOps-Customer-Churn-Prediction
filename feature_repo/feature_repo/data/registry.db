@@ -1,14 +1,14 @@
 
+E
+'
+customer"customer_idJfeature_repo
+‘ùüÏ°œ¯#‘ùüÏ°œ¯#
 A
 #
 __dummy"
 __dummy_idJfeature_repo
-¤‚’Ïøã¾K¤‚’Ïøã¾K
-C
-%
-customer"customer_idJfeature_repo
-¤‚’Ï¨ĞK¤‚’Ï¨ĞK1"$63d82844-af9a-4307-bf2e-9995f2a30079*¤‚’ÏèÅ«L2É
-ª
+‘ùüÏàÜ¾#‘ùüÏàÜ¾#1"$de764926-12dc-4c2c-9239-a174705fd477*ãùüÏğÏ¥m2ò
+¼
 churn_featuresfeature_repocustomer"
 Age"
 
@@ -21,17 +21,17 @@ C
 Subscription Type"
 Contract Length"
 Total Spend"
-Last Interaction2€£:¿event_timestampZ,*../../data/processed/churn_cleaned.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢*../../data/processed/churn_cleaned.parquet’¤‚’ÏĞ¸•,"¤‚’ÏÈô”K@’latest
-¤‚’Ï¸¿ßK¤‚’Ï¸¿ßKR¢
-Ÿ
-,feast.infra.online_stores.sqlite.SqliteTable"o
-PD:\WorkSpace\dtdm\doan_cloud\repo\feature_repo\feature_repo\data\online_store.dbfeature_repo_churn_featuresbÎevent_timestampZ,*../../data/processed/churn_cleaned.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢*../../data/processed/churn_cleaned.parquetªfeature_repo’¤‚’ÏĞ¸•,"¤‚’ÏÈô”KŠ,
+Last Interaction2€£:Àevent_timestampZ,*../../data/processed/churn_cleaned.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢*../../data/processed/churn_cleaned.parquet’ùüÏ²ªú"‘ùüÏøõ¼ @b
+customer_id’latest1
+‘ùüÏĞïô"ãùüÏØş›l
+€Â¯ğ‘œ‚Ğ¨‚à-bÏevent_timestampZ,*../../data/processed/churn_cleaned.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢*../../data/processed/churn_cleaned.parquetªfeature_repo’ùüÏ²ªú"‘ùüÏøõ¼ z4
+feature_repo$7bb36968-aafb-43b7-a200-52fe06b9ca5dŠ,
 
 feature_repo
-¤‚’ÏĞÔÜ-¤‚’ÏĞÔÜ-’®
-«
-churn_featuresfeature_repo"feature_view*É
-ª
+‘ùüÏ°‰è ‘ùüÏ°‰è ’À
+½
+churn_featuresfeature_repo"feature_view*Û
+¼
 churn_featuresfeature_repocustomer"
 Age"
 
@@ -44,5 +44,6 @@ PD:\WorkSpace\dtdm\doan_cloud\repo\feature_repo\feature_repo\data\online_store.d
 Subscription Type"
 Contract Length"
 Total Spend"
-Last Interaction2€£:¿event_timestampZ,*../../data/processed/churn_cleaned.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢*../../data/processed/churn_cleaned.parquet’¤‚’ÏĞ¸•,"¤‚’ÏÈô”K@’latest
-¤‚’Ï¸¿ßK¤‚’Ï¸¿ßK2¤‚’Ïğ´”LB$2d69ba8e-cd09-4501-a6d1-b8d57482c173
+Last Interaction2€£:Àevent_timestampZ,*../../data/processed/churn_cleaned.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢*../../data/processed/churn_cleaned.parquet’ùüÏ²ªú"‘ùüÏøõ¼ @b
+customer_id’latest
+‘ùüÏĞïô"‘ùüÏĞïô"2‘ùüÏ¨«#B$c7c10e52-f982-4416-918c-bd550685722a

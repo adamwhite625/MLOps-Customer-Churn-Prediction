@@ -4,15 +4,18 @@ import glob
 import subprocess
 import pandas as pd
 from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
 from feast import FeatureStore
+
+load_dotenv()
 
 FEATURE_REPO_PATH = "feature_repo/feature_repo"
 
 def prepare_real_data():
-    # Find the CSV file pulled via DVC
-    csv_files = glob.glob("data/raw/**/*.csv", recursive=True)
+    # Find the main training CSV file specifically
+    csv_files = glob.glob("data/raw/*master.csv")
     if not csv_files:
-        print("No data found. Skipping data preparation.")
+        print("No master data found in data/raw. Please run dvc pull.")
         return False
 
     csv_path = csv_files[0]
@@ -22,6 +25,7 @@ def prepare_real_data():
     df = df.dropna()
 
     df.rename(columns={"CustomerID": "customer_id"}, inplace=True)
+    df["customer_id"] = df["customer_id"].astype("int64")
 
     if df['Gender'].dtype == 'O':
         df['Gender'] = df['Gender'].str.strip().map({"Female": 0, "Male": 1}).fillna(0).astype("int64")
@@ -51,15 +55,24 @@ def main():
 
     print(f"Redis connection string found (length={len(redis_conn)}). Initializing Feast store...")
 
-    # Run feast apply via subprocess (uses feature_store.yaml config)
-    print("\n--- Running Feast Apply ---")
-    subprocess.run(["feast", "apply"], cwd=FEATURE_REPO_PATH, check=True)
+    # Delete old registry to force a clean apply
+    registry_path = os.path.join(FEATURE_REPO_PATH, "data", "registry.db")
+    if os.path.exists(registry_path):
+        os.remove(registry_path)
+        print("Removed old registry.db")
 
-    # Load store and inject the connection string directly to bypass YAML env-var substitution
-    print("\n--- Running Feast Materialize (Pushing to Redis) ---")
+    # Import feature definitions directly from the definitions file
+    print("\n--- Running Feast Apply ---")
+    sys.path.insert(0, FEATURE_REPO_PATH)
+    from feature_definitions import customer, churn_feature_view
+
     store = FeatureStore(repo_path=FEATURE_REPO_PATH)
     store.config.online_store.connection_string = redis_conn
+    store.apply([customer, churn_feature_view])
+    print("Feast Apply completed successfully.")
 
+    # Materialize features from Parquet to Redis
+    print("\n--- Running Feast Materialize (Pushing to Redis) ---")
     start = datetime(2020, 1, 1, tzinfo=timezone.utc)
     end = datetime.now(timezone.utc) + timedelta(days=1)
     store.materialize(start_date=start, end_date=end)
