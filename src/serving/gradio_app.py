@@ -192,42 +192,78 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
             )
 
         with gr.TabItem("Flow 3: Batch Upload for Training"):
-            gr.Markdown("Upload a CSV file containing multiple customer records (without CustomerID). This data will be sent to Azure Storage and trigger the continuous training loop.")
+            gr.Markdown("Upload a CSV file containing customer records (without Churn column). The system will predict churn for each row, display the results, and save the data for continuous training.")
             
             with gr.Row():
                 batch_file = gr.File(label="Upload CSV Data", file_types=[".csv"])
             
-            btn_batch = gr.Button("Upload & Trigger Training", variant="primary")
-            out_batch_log = gr.Textbox(label="Upload Status")
+            btn_batch = gr.Button("Predict & Upload", variant="primary")
+            out_batch_log = gr.Textbox(label="Status")
+            out_batch_table = gr.Dataframe(label="Prediction Results")
             
             def upload_batch_data(file_obj):
+                """Predicts churn for uploaded CSV, displays results, and saves data for retraining."""
                 if file_obj is None:
-                    return "Error: Please upload a CSV file."
+                    return "Error: Please upload a CSV file.", None
                 try:
-                    # Đọc file CSV mới
                     df_new = pd.read_csv(file_obj.name)
                     
-                    # Nếu file có cột CustomerID, hãy bỏ đi vì merge_feedback.py sẽ tự tạo
-                    if "CustomerID" in df_new.columns:
-                        df_new = df_new.drop(columns=["CustomerID"])
-                        
-                    # Thêm cột Timestamp để theo dõi giống Flow 2
-                    if "Timestamp" not in df_new.columns:
-                        df_new["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    # Remove columns that are not input features
+                    for col in ["CustomerID", "Churn", "Timestamp"]:
+                        if col in df_new.columns:
+                            df_new = df_new.drop(columns=[col])
+
+                    # Map categorical columns to numeric for prediction
+                    gender_map = {"Female": 0, "Male": 1}
+                    sub_map = {"Basic": 0, "Standard": 1, "Premium": 2}
+                    contract_map = {"Monthly": 0, "Quarterly": 1, "Annual": 2}
+
+                    df_predict = df_new.copy()
+                    if df_predict["Gender"].dtype == "O":
+                        df_predict["Gender"] = df_predict["Gender"].map(gender_map).fillna(0).astype(int)
+                    if df_predict["Subscription Type"].dtype == "O":
+                        df_predict["Subscription Type"] = df_predict["Subscription Type"].map(sub_map).fillna(1).astype(int)
+                    if df_predict["Contract Length"].dtype == "O":
+                        df_predict["Contract Length"] = df_predict["Contract Length"].map(contract_map).fillna(2).astype(int)
+
+                    # Call Azure ML endpoint for each row
+                    predictions = []
+                    for _, row in df_predict.iterrows():
+                        data_dict = row.to_dict()
+                        try:
+                            label = call_azure_ml(data_dict)
+                            pred = 1 if "CHURN" in label else 0
+                        except Exception:
+                            pred = -1
+                        predictions.append(pred)
+
+                    # Build result table with original values and predictions
+                    df_result = df_new.copy()
+                    df_result["Predicted Churn"] = predictions
+                    df_result["Predicted Churn"] = df_result["Predicted Churn"].map(
+                        {1: "CHURN", 0: "LOYAL", -1: "ERROR"}
+                    )
+
+                    # Save numeric version for retraining (use predicted churn as label)
+                    df_save = df_predict.copy()
+                    df_save["Churn"] = [1 if p == 1 else 0 for p in predictions]
+                    df_save["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
                     file_path = "data/raw/collected_data.csv"
                     os.makedirs("data/raw", exist_ok=True)
                     
-                    # Nối vào file gom chung (dùng chung với Flow 2)
                     if not os.path.exists(file_path):
-                        df_new.to_csv(file_path, index=False)
+                        df_save.to_csv(file_path, index=False)
                     else:
-                        df_new.to_csv(file_path, mode='a', header=False, index=False)
+                        df_save.to_csv(file_path, mode='a', header=False, index=False)
                         
                     total_rows = sum(1 for line in open(file_path)) - 1
-                    log_msg = f"Added {len(df_new)} rows from CSV. (Total: {total_rows}/5 rows to trigger retraining)"
+                    churn_count = predictions.count(1)
+                    loyal_count = predictions.count(0)
+                    log_msg = f"Predicted {len(df_new)} rows: {churn_count} CHURN, {loyal_count} LOYAL"
+                    log_msg += f"\nSaved to CSV (Total: {total_rows}/5 rows to trigger retraining)"
                     
-                    # Kiểm tra nếu đủ 5 dòng thì kích hoạt upload
+                    # Upload to Blob Storage if threshold is reached
                     if total_rows >= 5:
                         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                         blob_name = f"batch_{timestamp}_bulk.csv"
@@ -238,14 +274,14 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                         with open(file_path, "rb") as file_data:
                             blob_client.upload_blob(file_data)
                             
-                        log_msg += f"\nUploaded batch {blob_name} to Azure Storage! Continuous Training Pipeline Triggered 🚀"
+                        log_msg += f"\nUploaded {blob_name} to Azure Storage! Continuous Training Pipeline Triggered!"
                         os.remove(file_path)
                         
-                    return log_msg
+                    return log_msg, df_result
                 except Exception as e:
-                    return f"Error processing file: {str(e)}"
+                    return f"Error processing file: {str(e)}", None
                     
-            btn_batch.click(fn=upload_batch_data, inputs=[batch_file], outputs=[out_batch_log])
+            btn_batch.click(fn=upload_batch_data, inputs=[batch_file], outputs=[out_batch_log, out_batch_table])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 7860))

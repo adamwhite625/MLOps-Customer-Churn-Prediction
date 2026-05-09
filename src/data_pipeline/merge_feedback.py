@@ -68,7 +68,7 @@ def main():
     df_historical = pd.read_csv(HISTORICAL_DATA_PATH)
     
     # Tạo CustomerID mới nối tiếp ID lớn nhất cũ
-    max_id = df_historical["CustomerID"].max()
+    max_id = int(df_historical["CustomerID"].max())
     df_new.insert(0, "CustomerID", range(max_id + 1, max_id + 1 + len(df_new)))
 
     # Sắp xếp lại cột cho chuẩn
