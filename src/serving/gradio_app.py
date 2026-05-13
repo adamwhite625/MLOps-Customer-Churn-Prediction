@@ -50,6 +50,17 @@ def call_azure_ml(data_dict):
     pred = result["predictions"][0]
     return "CHURN" if pred == 1 else "LOYAL"
 
+def call_azure_ml_batch(data_list):
+    """Sends batch inference request to Azure ML endpoint."""
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {PRIMARY_KEY}"
+    }
+    response = requests.post(SCORING_URI, data=json.dumps({"data": data_list}), headers=headers)
+    response.raise_for_status()
+    result = response.json()
+    return result.get("predictions", [])
+
 def predict_with_feast(customer_id):
     """Predicts churn using features retrieved from Feast online store."""
     if store is None:
@@ -226,16 +237,12 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                     if df_predict["Contract Length"].dtype == "O":
                         df_predict["Contract Length"] = df_predict["Contract Length"].map(contract_map).fillna(2).astype(int)
 
-                    # Call Azure ML endpoint for each row
-                    predictions = []
-                    for _, row in df_predict.iterrows():
-                        data_dict = row.to_dict()
-                        try:
-                            label = call_azure_ml(data_dict)
-                            pred = 1 if "CHURN" in label else 0
-                        except Exception:
-                            pred = -1
-                        predictions.append(pred)
+                    # Call Azure ML endpoint ONCE for the entire batch
+                    data_list = df_predict.to_dict(orient="records")
+                    try:
+                        predictions = call_azure_ml_batch(data_list)
+                    except Exception:
+                        predictions = [-1] * len(data_list)
 
                     # Build result table with original values and predictions
                     df_result = df_new.copy()
