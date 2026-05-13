@@ -46,7 +46,12 @@ def main():
     # Xử lý dữ liệu mới để khớp với cấu trúc dữ liệu cũ
     # File gốc có: CustomerID,Age,Gender,Tenure,Usage Frequency,Support Calls,Payment Delay,Subscription Type,Contract Length,Total Spend,Last Interaction,Churn
     if "Predicted_Churn" in df_new.columns:
-        df_new.rename(columns={"Predicted_Churn": "Churn"}, inplace=True)
+        if "Churn" in df_new.columns:
+            # Merge the two columns into one 'Churn' column and drop 'Predicted_Churn'
+            df_new["Churn"] = df_new["Churn"].fillna(df_new["Predicted_Churn"])
+            df_new.drop(columns=["Predicted_Churn"], inplace=True)
+        else:
+            df_new.rename(columns={"Predicted_Churn": "Churn"}, inplace=True)
     if "Timestamp" in df_new.columns:
         df_new.drop(columns=["Timestamp"], inplace=True)
 
